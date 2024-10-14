@@ -4,7 +4,7 @@ from uuid import uuid4
 from utils.hashing import get_password_hash
 from fastapi import status
 from utils.hashing import verify_password
-from utils.token import create_access_token, decode_access_token
+from utils.token import create_access_token, verification
 from models.models import Users
 from pydantic import EmailStr
 
@@ -65,13 +65,13 @@ class UserController:
             }
         )
 
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "userid": user.userid,
+        }
 
     def get_user_profile(self, user_id: str, authorization: str):
-        token = authorization.split(" ")[1]
-        payload = decode_access_token(token)
-        user_id_from_token = payload.get("userid")
-
         user = self.db.query(Users).filter(Users.userid == user_id).first()
 
         if not user:
@@ -80,11 +80,7 @@ class UserController:
                 detail="User not found",
             )
 
-        if user.userid != user_id_from_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized access",
-            )
+        verification(token=authorization.split(" ")[1], role="user", entity_id=user_id)
 
         return {
             "name": user.name,
@@ -96,10 +92,6 @@ class UserController:
         }
 
     def update_user(self, user_id: str, authorization: str, data: dict):
-        token = authorization.split(" ")[1]
-        payload = decode_access_token(token)
-        email_from_token = payload.get("email")
-
         user = self.db.query(Users).filter(Users.userid == user_id).first()
 
         if not user:
@@ -108,11 +100,7 @@ class UserController:
                 detail="User not found",
             )
 
-        if user.email != email_from_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized access: email does not match",
-            )
+        verification(token=authorization.split(" ")[1], role="user", entity_id=user_id)
 
         for key, value in data.items():
             if value is not None:
@@ -122,3 +110,6 @@ class UserController:
         self.db.refresh(user)
 
         return {"message": "User data updated successfully"}
+
+    def __del__(self):
+        pass

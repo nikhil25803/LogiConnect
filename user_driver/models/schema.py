@@ -73,3 +73,24 @@ class DriverUpdate(BaseModel):
     country_code: Optional[str] = None
     mobile: Optional[str] = None
     password: Optional[str] = None
+
+
+"""
+Vehicle Pydantic Model
+"""
+
+
+class AddVehicle(BaseModel):
+    model: str
+    registration_number: str
+    capacity: int
+    availability: bool
+    cost_per_km: float
+
+
+class VehicleUpdate(BaseModel):
+    model: Optional[str] = None
+    registration_number: Optional[str] = None
+    capacity: Optional[int] = None
+    availability: Optional[bool] = None
+    cost_per_km: Optional[float] = None
