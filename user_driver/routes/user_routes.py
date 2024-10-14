@@ -7,11 +7,6 @@ from models.schema import UserOnboard, UserLogin, UserUpdate
 
 # User router
 user_router = APIRouter(prefix="/user", tags=["users"])
-driver_router = APIRouter(prefix="/driver", tags=["driver"])
-
-
-# Customer class instance
-customer_instance = UserController(db=Depends(get_db))
 
 
 @user_router.post("/onboard")

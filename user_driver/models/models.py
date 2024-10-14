@@ -29,6 +29,8 @@ class Driver(Base):
     availability = Column(Boolean, default=True)
     name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
+    state = Column(String, index=True)
+    country = Column(String, index=True)
     country_code = Column(String, index=True)
     mobile = Column(String, unique=True, index=True)
     regions = Column(ARRAY(String))

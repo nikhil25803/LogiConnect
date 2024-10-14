@@ -2,10 +2,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from uuid import uuid4
 from utils.hashing import get_password_hash
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from uuid import uuid4
-from utils.hashing import get_password_hash, verify_password
+from fastapi import status
+from utils.hashing import verify_password
 from utils.token import create_access_token, decode_access_token
 from models.models import Users
 from pydantic import EmailStr
@@ -74,7 +72,7 @@ class UserController:
         payload = decode_access_token(token)
         user_id_from_token = payload.get("userid")
 
-        user = self.db.query(Users).filter(Users.userid == user_id_from_token).first()
+        user = self.db.query(Users).filter(Users.userid == user_id).first()
 
         if not user:
             raise HTTPException(
@@ -82,7 +80,7 @@ class UserController:
                 detail="User not found",
             )
 
-        if user.userid != user_id:
+        if user.userid != user_id_from_token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Unauthorized access",
@@ -123,15 +121,4 @@ class UserController:
         self.db.commit()
         self.db.refresh(user)
 
-        return {
-            "message": "User data updated successfully",
-            "user": {
-                "name": user.name,
-                "email": user.email,
-                "country": user.country,
-                "state": user.state,
-                "country_code": user.country_code,
-                "phone_number": user.phone_number,
-                "role": user.role,
-            }
-        }
+        return {"message": "User data updated successfully"}
