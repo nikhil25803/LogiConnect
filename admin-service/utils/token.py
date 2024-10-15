@@ -10,6 +10,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -37,20 +38,11 @@ def decode_access_token(token: str):
 def verification(token: str, role: str, entity_id: str):
     try:
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if role == "user" and role == decoded_data.get("role"):
+        if role == "admin" and role == decoded_data.get("role"):
 
-            user_id_from_token = decoded_data.get("userid")
+            admin_email_from_token = decoded_data.get("email")
 
-            if entity_id != user_id_from_token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Unauthorized access",
-                )
-
-        if role == "driver" and role == decoded_data.get("role"):
-            driver_id_from_token = decoded_data.get("driverid")
-
-            if entity_id != driver_id_from_token:
+            if entity_id != admin_email_from_token:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Unauthorized access",

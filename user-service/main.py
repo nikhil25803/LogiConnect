@@ -20,17 +20,3 @@ async def ping(db: AsyncSession = Depends(get_db)):
     }
     return headers
 
-# @app.post("/user")
-# async def create_user(user: UserBase, db: AsyncSession = Depends(get_db)):
-#     db_user = Users(name=user.name)
-#     db.add(db_user)
-#     await db.commit()
-#     await db.refresh(db_user)
-#     return db_user
-
-
-# @app.get("/user")
-# async def get_users(db: AsyncSession = Depends(get_db)):
-#     result = await db.execute(select(Users))
-#     users = result.scalars().all()
-#     return {"users": users}

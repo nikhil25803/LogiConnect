@@ -2,39 +2,6 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
 
-"""
-User Pydantic Model
-"""
-
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserOnboard(BaseModel):
-    name: str
-    email: EmailStr
-    country: str
-    state: str
-    country_code: str
-    phone_number: str
-    password: str
-
-
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    country: Optional[str] = None
-    state: Optional[str] = None
-    country_code: Optional[str] = None
-    phone_number: Optional[str] = None
-
-
-"""
-Driver Pydantic Model
-"""
-
-
 class DriverLogin(BaseModel):
     email: EmailStr
     password: str
@@ -73,24 +40,3 @@ class DriverUpdate(BaseModel):
     country_code: Optional[str] = None
     mobile: Optional[str] = None
     password: Optional[str] = None
-
-
-"""
-Vehicle Pydantic Model
-"""
-
-
-class AddVehicle(BaseModel):
-    model: str
-    registration_number: str
-    capacity: int
-    availability: bool
-    cost_per_km: float
-
-
-class VehicleUpdate(BaseModel):
-    model: Optional[str] = None
-    registration_number: Optional[str] = None
-    capacity: Optional[int] = None
-    availability: Optional[bool] = None
-    cost_per_km: Optional[float] = None
