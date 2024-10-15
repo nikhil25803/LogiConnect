@@ -1,66 +1,63 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from models.models import Driver, Vehicle
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
 from uuid import uuid4
 from utils.hashing import get_password_hash, verify_password
 from utils.token import create_access_token, verification
-from models.schema import DriverOnboard, DriverLogin, AddVehicle
+from models.models import Driver
+from pydantic import EmailStr
 
 
 class DriverController:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def onboard_driver(self, driver: DriverOnboard):
-        # Check if the email or mobile already exists
-        existing_driver = (
-            self.db.query(Driver)
-            .filter((Driver.email == driver.email) | (Driver.mobile == driver.mobile))
-            .first()
-        )
-        if existing_driver:
-            raise HTTPException(status_code=400, detail="Driver already exists")
+    async def create_driver(self, data: dict):
+        existing_user_query = select(Driver).filter(Driver.email == data["email"])
+        result = await self.db.execute(existing_user_query)
+        existing_user = result.scalars().first()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Driver with the given email is already registered",
+            )
 
         entity_id = str(uuid4())
-        hashed_password = get_password_hash(driver.password)
+        hashed_password = get_password_hash(data["password"])
 
-        new_driver = Driver(
+        new_user = Driver(
             driverid=entity_id,
-            availability=driver.availability,
-            name=driver.name,
-            email=driver.email,
-            state=driver.state,
-            country=driver.country,
-            country_code=driver.country_code,
-            mobile=driver.mobile,
-            regions=driver.regions if driver.regions else [],
+            name=data.get("name"),
+            email=data.get("email"),
             password=hashed_password,
+            country=data.get("country"),
+            country_code=data.get("country_code"),
             role="driver",
+            state=data.get("state"),
+            mobile=data.get("mobile"),
         )
 
-        self.db.add(new_driver)
-        self.db.commit()
-        self.db.refresh(new_driver)
+        self.db.add(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
 
-        return {
-            "message": "Driver onboarded successfully",
-            "driver_id": new_driver.driverid,
-        }
+        return {"message": "Driver onboarded successfully"}
 
-    def login_driver(self, driver_login: DriverLogin):
-        driver = (
-            self.db.query(Driver).filter(Driver.email == driver_login.email).first()
-        )
+    async def login_driver(self, email: EmailStr, password: str):
+        query = select(Driver).filter(Driver.email == email)
+        result = await self.db.execute(query)
+        driver = result.scalars().first()
 
         if not driver:
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Invalid credentials",
             )
 
-        if not verify_password(driver_login.password, driver.password):
+        if not verify_password(password, driver.password):
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid password",
             )
 
@@ -79,11 +76,16 @@ class DriverController:
             "driverid": driver.driverid,
         }
 
-    def get_driver_details(self, driver_id: str, authorization: str):
-        driver = self.db.query(Driver).filter(Driver.driverid == driver_id).first()
+    async def get_driver_profile(self, driver_id: str, authorization: str):
+        query = select(Driver).filter(Driver.driverid == driver_id)
+        result = await self.db.execute(query)
+        driver = result.scalars().first()
 
         if not driver:
-            raise HTTPException(status_code=404, detail="Driver not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Driver not found",
+            )
 
         verification(
             token=authorization.split(" ")[1], role="driver", entity_id=driver_id
@@ -94,120 +96,6 @@ class DriverController:
             "email": driver.email,
             "country": driver.country,
             "state": driver.state,
-            "phone_number": driver.mobile,
-            "regions": driver.regions,
+            "mobile": driver.mobile,
             "role": driver.role,
         }
-
-    def update_driver_details(self, driver_id: str, data: dict, authorization: str):
-        driver = self.db.query(Driver).filter(Driver.driverid == driver_id).first()
-        if not driver:
-            raise HTTPException(status_code=404, detail="Driver not found")
-
-        verification(
-            token=authorization.split(" ")[1], role="driver", entity_id=driver_id
-        )
-
-        for key, value in data.items():
-            if value is not None:
-                setattr(driver, key, value)
-
-        self.db.commit()
-        self.db.refresh(driver)
-
-        return {"message": "User data updated successfully"}
-
-    def add_vehicle(self, driver_id: str, vehicle_data: AddVehicle, authorization: str):
-        driver = self.db.query(Driver).filter(Driver.driverid == driver_id).first()
-        if not driver:
-            raise HTTPException(status_code=404, detail="Driver not found")
-
-        verification(
-            token=authorization.split(" ")[1], role="driver", entity_id=driver_id
-        )
-
-        existing_vehicle = (
-            self.db.query(Vehicle)
-            .filter(Vehicle.registration_number == vehicle_data.registration_number)
-            .first()
-        )
-        if existing_vehicle:
-            raise HTTPException(
-                status_code=400,
-                detail="Vehicle with this registration number already exists",
-            )
-
-        vehicle_id = str(uuid4())
-        new_vehicle = Vehicle(
-            vehicleid=vehicle_id,
-            driverid=driver.id,
-            model=vehicle_data.model,
-            registration_number=vehicle_data.registration_number,
-            capacity=vehicle_data.capacity,
-            availability=vehicle_data.availability,
-            cost_per_km=vehicle_data.cost_per_km,
-        )
-
-        self.db.add(new_vehicle)
-        self.db.commit()
-        self.db.refresh(new_vehicle)
-
-        return {"message": "Vehicle added successfully"}
-
-    def get_driver_vehicles(self, driver_id: str, authorization: str):
-        driver = self.db.query(Driver).filter(Driver.driverid == driver_id).first()
-        if not driver:
-            raise HTTPException(status_code=404, detail="Driver not found")
-
-        verification(
-            token=authorization.split(" ")[1], role="driver", entity_id=driver_id
-        )
-
-        vehicles = self.db.query(Vehicle).filter(Vehicle.driverid == driver.id).all()
-
-        if not vehicles:
-            raise HTTPException(
-                status_code=404, detail="No vehicles found for this driver"
-            )
-
-        vehicle_list = [
-            {
-                "vehicleid": vehicle.vehicleid,
-                "model": vehicle.model,
-                "registration_number": vehicle.registration_number,
-                "capacity": vehicle.capacity,
-                "availability": vehicle.availability,
-                "cost_per_km": vehicle.cost_per_km,
-            }
-            for vehicle in vehicles
-        ]
-
-        return {
-            "driver_id": driver_id,
-            "vehicles": vehicle_list,
-        }
-
-    def update_vehicle_details(
-        self, driver_id: str, vehicle_id: str, data: dict, authorization: str
-    ):
-        driver = self.db.query(Driver).filter(Driver.driverid == driver_id).first()
-        if not driver:
-            raise HTTPException(status_code=404, detail="Driver not found")
-
-        verification(
-            token=authorization.split(" ")[1], role="driver", entity_id=driver_id
-        )
-
-        vehicle = self.db.query(Vehicle).filter(Vehicle.vehicleid == vehicle_id).first()
-
-        if not vehicle:
-            raise HTTPException(status_code=404, detail="Invalid vehicle ID")
-
-        for key, value in data.items():
-            if value is not None:
-                setattr(vehicle, key, value)
-
-        self.db.commit()
-        self.db.refresh(vehicle)
-
-        return {"message": "Vehicle data updated successfully"}

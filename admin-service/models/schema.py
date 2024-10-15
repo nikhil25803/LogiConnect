@@ -1,96 +1,29 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional
 
 
-"""
-User Pydantic Model
-"""
-
-
-class UserLogin(BaseModel):
+class AdminLogin(BaseModel):
     email: EmailStr
     password: str
-
-
-class UserOnboard(BaseModel):
-    name: str
-    email: EmailStr
-    country: str
-    state: str
-    country_code: str
-    phone_number: str
-    password: str
-
-
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    country: Optional[str] = None
-    state: Optional[str] = None
-    country_code: Optional[str] = None
-    phone_number: Optional[str] = None
-
-
-"""
-Driver Pydantic Model
-"""
-
-
-class DriverLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class DriverOnboard(BaseModel):
-    name: str
-    email: EmailStr
-    availability: Optional[bool] = True
-    country: str
-    state: str
-    country_code: str
-    mobile: str
-    password: str
-    regions: Optional[List[str]] = None
-
-
-class DriverProfile(BaseModel):
-    id: int
-    driverid: str
-    availability: bool
-    name: str
-    email: EmailStr
-    country_code: str
-    mobile: str
-    regions: Optional[List[str]] = None
-    created_at: str
-    updated_at: str
-
-
-class DriverUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    availability: Optional[bool] = None
-    regions: Optional[List[str]] = None
-    country_code: Optional[str] = None
-    mobile: Optional[str] = None
-    password: Optional[str] = None
-
-
-"""
-Vehicle Pydantic Model
-"""
 
 
 class AddVehicle(BaseModel):
-    model: str
+    model_name: str
+    capacity_in_kg: float
     registration_number: str
-    capacity: int
-    availability: bool
-    cost_per_km: float
+    current_latitude: str
+    current_longitude: str
+    is_available: bool
+    active_status: bool
+    fuel_type: str
 
 
-class VehicleUpdate(BaseModel):
-    model: Optional[str] = None
+class UpdateVehicle(BaseModel):
+    model_name: Optional[str] = None
+    capacity_in_kg: Optional[float] = None
     registration_number: Optional[str] = None
-    capacity: Optional[int] = None
-    availability: Optional[bool] = None
-    cost_per_km: Optional[float] = None
+    current_latitude: Optional[str] = None
+    current_longitude: Optional[str] = None
+    is_available: Optional[bool] = None
+    active_status: Optional[bool] = None
+    fuel_type: Optional[str] = None

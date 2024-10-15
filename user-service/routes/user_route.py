@@ -27,9 +27,7 @@ async def onboard_user(user_data: UserOnboard, db: AsyncSession = Depends(get_db
 async def login_user(user_login: UserLogin, db: AsyncSession = Depends(get_db)):
     try:
         user_instance = UserController(db)
-        response = await user_instance.login_user(
-            user_login.email, user_login.password
-        )
+        response = await user_instance.login_user(user_login.email, user_login.password)
         return JSONResponse(
             content=response,
             media_type="application/json",
@@ -58,4 +56,3 @@ async def get_user_profile(
             status_code=500,
             content={"detail": str(e)},
         )
-
