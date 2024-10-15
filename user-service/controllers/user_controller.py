@@ -6,7 +6,7 @@ from utils.hashing import get_password_hash
 from fastapi import status
 from utils.hashing import verify_password
 from utils.token import create_access_token, verification
-from models.models import Users
+from models.models import Users, Vehicle
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,9 +45,6 @@ class UserController:
         await self.db.refresh(new_user)
 
         return {"message": "User onboarded successfully"}
-
-    def __del__(self):
-        pass
 
     async def login_user(self, email: EmailStr, password: str):
         result = await self.db.execute(select(Users).filter(Users.email == email))
@@ -101,3 +98,6 @@ class UserController:
             "phone_number": user.phone_number,
             "role": user.role,
         }
+
+    def __del__(self):
+        pass

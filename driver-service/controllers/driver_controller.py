@@ -26,21 +26,24 @@ class DriverController:
         entity_id = str(uuid4())
         hashed_password = get_password_hash(data["password"])
 
-        new_user = Driver(
+        new_driver = Driver(
             driverid=entity_id,
             name=data.get("name"),
             email=data.get("email"),
             password=hashed_password,
             country=data.get("country"),
             country_code=data.get("country_code"),
-            role="driver",
             state=data.get("state"),
             mobile=data.get("mobile"),
+            current_location=data.get("current_location"),
+            regions_available=data.get("regions_available", []),
+            availability=data.get("availability", True),
+            role="driver",
         )
 
-        self.db.add(new_user)
+        self.db.add(new_driver)
         await self.db.commit()
-        await self.db.refresh(new_user)
+        await self.db.refresh(new_driver)
 
         return {"message": "Driver onboarded successfully"}
 

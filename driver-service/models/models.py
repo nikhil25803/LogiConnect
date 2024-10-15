@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql import func
 from config.database import Base
@@ -11,13 +11,14 @@ class Driver(Base):
     driverid = Column(String, unique=True, index=True)
     name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
-    state = Column(String, index=True)
+    mobile = Column(String, unique=True)
     country = Column(String, index=True)
-    country_code = Column(String, index=True)
-    mobile = Column(String, unique=True, index=True)
-    regions = Column(ARRAY(String))
+    state = Column(String, index=True)
+    current_location = Column(String, index=True)
+    regions_available = Column(ARRAY(String), index=True)
+    availability = Column(Boolean, default=True, index=True)
     password = Column(String)
-    availability = Column(Boolean, default=True)
-    role = Column(String, index=True)
+    role = Column(String, index=True, default="driver")
+    country_code = Column(String, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

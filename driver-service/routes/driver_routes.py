@@ -4,6 +4,8 @@ from controllers.driver_controller import DriverController
 from models.schema import DriverOnboard, DriverLogin
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
+from utils.populate_data import populate_driver_data
+
 
 # Driver route
 driver_route = APIRouter(prefix="/driver", tags=["drivers"])
@@ -62,3 +64,12 @@ async def get_driver_profile(
             status_code=500,
             content={"detail": str(e)},
         )
+
+
+@driver_route.post("/populate")
+async def populate_drivers(num_drivers: int = 1000, db: AsyncSession = Depends(get_db)):
+    try:
+        response = await populate_driver_data(db, num_drivers)
+        return JSONResponse(content=response, status_code=status.HTTP_201_CREATED)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
