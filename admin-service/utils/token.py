@@ -39,7 +39,6 @@ def verification(token: str, role: str, entity_id: str):
     try:
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if role == "admin" and role == decoded_data.get("role"):
-
             admin_email_from_token = decoded_data.get("email")
 
             if entity_id != admin_email_from_token:

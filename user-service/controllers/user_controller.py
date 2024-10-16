@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from uuid import uuid4
 from utils.hashing import get_password_hash
@@ -45,9 +44,6 @@ class UserController:
         await self.db.refresh(new_user)
 
         return {"message": "User onboarded successfully"}
-
-    def __del__(self):
-        pass
 
     async def login_user(self, email: EmailStr, password: str):
         result = await self.db.execute(select(Users).filter(Users.email == email))
@@ -101,3 +97,6 @@ class UserController:
             "phone_number": user.phone_number,
             "role": user.role,
         }
+
+    def __del__(self):
+        pass

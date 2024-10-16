@@ -38,7 +38,6 @@ def verification(token: str, role: str, entity_id: str):
     try:
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if role == "user" and role == decoded_data.get("role"):
-
             user_id_from_token = decoded_data.get("userid")
 
             if entity_id != user_id_from_token:
