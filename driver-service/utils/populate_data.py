@@ -4,6 +4,8 @@ from utils.hashing import get_password_hash
 from models.models import Driver
 from sqlalchemy.ext.asyncio import AsyncSession
 import random
+import logging
+from sqlalchemy.exc import IntegrityError
 
 fake = Faker("en_IN")
 
@@ -38,10 +40,11 @@ INDIAN_STATES = [
     "West Bengal",
 ]
 
-import logging
-from sqlalchemy.exc import IntegrityError
-from uuid import uuid4
-import random
+
+def generate_random_location():
+    latitude = random.uniform(8.0, 37.0)
+    longitude = random.uniform(68.0, 97.0)
+    return latitude, longitude
 
 
 async def populate_driver_data(db: AsyncSession, num_drivers: int = 1000):
@@ -51,6 +54,8 @@ async def populate_driver_data(db: AsyncSession, num_drivers: int = 1000):
         try:
             hashed_password = get_password_hash("Driver@12345")
             entity_id = str(uuid4())
+            current_latitude, current_longitude = generate_random_location()
+
             driver = Driver(
                 driverid=entity_id,
                 name=fake.name(),
@@ -60,7 +65,8 @@ async def populate_driver_data(db: AsyncSession, num_drivers: int = 1000):
                 country="India",
                 country_code="+91",
                 state=random.choice(INDIAN_STATES),
-                current_location=random.choice(INDIAN_STATES),
+                current_latitude=current_latitude,
+                current_longitude=current_longitude,
                 regions_available=[random.choice(INDIAN_STATES) for _ in range(3)],
                 availability=True,
                 role="driver",
@@ -71,6 +77,7 @@ async def populate_driver_data(db: AsyncSession, num_drivers: int = 1000):
             drivers_added += 1
 
         except IntegrityError as e:
+            logging.error(f"Error adding driver: {e}")
             await db.rollback()
 
     return {

@@ -1,11 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.models import Vehicle
 from models.schema import VehicleSearch
-from config.database import get_db
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from utils.helpers import LogisticsCalculations
 import asyncio
+
+
+from models.models import Driver
 
 
 class VehicleController:
@@ -17,7 +19,6 @@ class VehicleController:
         try:
             vehicles_query = select(Vehicle).filter(
                 Vehicle.capacity_in_kg >= search_params.capacity_in_kg,
-                Vehicle.fuel_type == search_params.fuel_type,
                 Vehicle.is_available == True,
                 Vehicle.active_status == True,
             )
@@ -77,12 +78,72 @@ class VehicleController:
 
             nearby_vehicles.sort(key=lambda x: x["total_price"])
 
-            return nearby_vehicles
+            return nearby_vehicles[:20]
 
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error fetching vehicles: {str(e)}",
+            )
+
+    async def suggest_nearest_driver(self, vehicle_id: str):
+        try:
+            vehicle_query = select(Vehicle).filter(Vehicle.vehicleid == vehicle_id)
+            result = await self.db.execute(vehicle_query)
+            vehicle = result.scalar()
+
+            if not vehicle:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+                )
+
+            drivers_query = select(Driver).filter(Driver.availability == True)
+
+            result = await self.db.execute(drivers_query)
+            drivers = result.scalars().all()
+
+            logistic_calculator = LogisticsCalculations()
+
+            async def calculate_driver_distance(driver):
+                driver_latitude = float(driver.current_latitude)
+                driver_longitude = float(driver.current_longitude)
+
+                distance = await asyncio.to_thread(
+                    logistic_calculator.calculate_estimated_distance,
+                    from_latitude=vehicle.current_latitude,
+                    from_longitude=vehicle.current_longitude,
+                    to_latitude=driver_latitude,
+                    to_longitude=driver_longitude,
+                )
+
+                return driver, distance
+
+            tasks = [calculate_driver_distance(driver) for driver in drivers]
+            results = await asyncio.gather(*tasks)
+
+            nearby_drivers = []
+            for driver, distance in results:
+                if distance <= self.radius:
+                    nearby_drivers.append(
+                        {
+                            "driver_id": driver.driverid,
+                            "name": driver.name,
+                            "email": driver.email,
+                            "mobile": driver.mobile,
+                            "current_latitude": driver.current_latitude,
+                            "current_longitude": driver.current_longitude,
+                            "distance_from_vehicle": distance,
+                        }
+                    )
+
+            nearby_drivers.sort(key=lambda x: x["distance_from_vehicle"])
+
+            return nearby_drivers[0]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error fetching drivers: {str(e)}",
             )
 
     def __del__(self):

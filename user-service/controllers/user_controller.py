@@ -1,12 +1,11 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from uuid import uuid4
 from utils.hashing import get_password_hash
 from fastapi import status
 from utils.hashing import verify_password
 from utils.token import create_access_token, verification
-from models.models import Users, Vehicle
+from models.models import Users
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 

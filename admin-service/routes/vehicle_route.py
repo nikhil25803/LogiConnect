@@ -21,7 +21,7 @@ async def add_vehicle(
         return await controller.add_vehicle(vehicle_data=vehicle_data, token=token)
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
@@ -44,7 +44,7 @@ async def update_vehicle(
         )
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
@@ -63,7 +63,7 @@ async def get_all_vehicles(
         return await controller.get_all_vehicles(token=token)
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",

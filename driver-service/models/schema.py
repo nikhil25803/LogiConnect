@@ -13,7 +13,8 @@ class DriverOnboard(BaseModel):
     mobile: str
     state: str
     country: str
-    current_location: str
+    current_latitude: float
+    current_longitude: float  #
     regions_available: Optional[List[str]] = None
     availability: Optional[bool] = True
     password: str
