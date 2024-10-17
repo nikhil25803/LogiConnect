@@ -193,6 +193,7 @@ class DriverController:
 
         if booking_filter == "Pending":
             booking_query = select(
+                BookingRequest.booking_id,
                 BookingRequest.pickup_location,
                 BookingRequest.drop_location,
                 BookingRequest.distance_to_cover,
@@ -203,6 +204,7 @@ class DriverController:
             )
         elif booking_filter == "Accepted":
             booking_query = select(
+                BookingRequest.booking_id,
                 BookingRequest.pickup_location,
                 BookingRequest.pickup_latitude,
                 BookingRequest.pickup_longitude,
@@ -221,6 +223,7 @@ class DriverController:
             )
         elif booking_filter == "Rejected":
             booking_query = select(
+                BookingRequest.booking_id,
                 BookingRequest.pickup_location,
                 BookingRequest.drop_location,
                 BookingRequest.distance_to_cover,
@@ -231,6 +234,7 @@ class DriverController:
             )
         elif booking_filter == "Completed":
             booking_query = select(
+                BookingRequest.booking_id,
                 BookingRequest.pickup_location,
                 BookingRequest.pickup_latitude,
                 BookingRequest.pickup_longitude,
@@ -247,6 +251,7 @@ class DriverController:
             )
         else:
             booking_query = select(
+                BookingRequest.booking_id,
                 BookingRequest.pickup_location,
                 BookingRequest.drop_location,
                 BookingRequest.distance_to_cover,
@@ -293,6 +298,8 @@ class DriverController:
                 formatted_booking["order_status"] = booking.order_status
             if hasattr(booking, "request_status"):
                 formatted_booking["request_status"] = booking.request_status
+            if hasattr(booking, "booking_id"):
+                formatted_booking["booking_id"] = booking.booking_id
 
             formatted_bookings.append(formatted_booking)
 

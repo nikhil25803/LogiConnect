@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 
 class AdminLogin(BaseModel):
@@ -27,3 +27,57 @@ class UpdateVehicle(BaseModel):
     is_available: Optional[bool] = None
     active_status: Optional[bool] = None
     fuel_type: Optional[str] = None
+
+
+class AddDriver(BaseModel):
+    driverid: Optional[str]
+    name: str
+    email: str
+    mobile: str
+    country: str
+    state: str
+    current_latitude: float
+    current_longitude: float
+    regions_available: List[str]
+    availability: bool = True
+    password: str
+    role: str = "driver"
+    country_code: str
+
+
+from pydantic import BaseModel
+from typing import List, Optional
+
+
+class VehicleResponse(BaseModel):
+    vehicleid: str
+    model_name: str
+    registration_number: str
+    is_available: bool
+    fuel_type: str
+
+
+class VehiclesResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    current_page: int
+    next_page: bool
+    prev_page: bool
+    vehicles: List[VehicleResponse]
+
+
+class DriverResponse(BaseModel):
+    driverid: str
+    name: str
+    email: str
+    mobile: str
+    availability: bool
+
+
+class DriversResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    current_page: int
+    next_page: bool
+    prev_page: bool
+    drivers: List[DriverResponse]

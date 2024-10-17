@@ -127,7 +127,7 @@ async def update_order_status(
         result = await controller.update_order_status(booking_id, new_status)
         return result
     except Exception as e:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": e.detail},
+            detail="Server Error: Unable to update booking statuss",
         )
