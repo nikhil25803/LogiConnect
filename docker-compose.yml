@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: logiconnect
+      POSTGRES_PASSWORD: logiconnect@12345
+      POSTGRES_DB: logiconnectDB
+    ports:
+      - "5432:5432"
+  
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./user-service/.env.docker
+    depends_on:
+      - postgres
+      - redis
+  
+  driver-service:
+    build:
+      context: ./driver-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./driver-service/.env.docker
+    depends_on:
+      - postgres
+      - redis
+  
+  admin-service:
+    build:
+      context: ./admin-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./admin-service/.env.docker
+    depends_on:
+      - postgres
+      - redis
+
+networks:
+  default:
+    driver: bridge
