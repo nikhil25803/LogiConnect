@@ -66,19 +66,43 @@ async def get_driver_profile(
         )
 
 
-@driver_route.get("/bookings")
-async def get_driver_profile(
+@driver_route.get("/booking")
+async def get_driver_bookings(
     driver_id: str = Query(...),
-    booking_status: str = Query(...),
+    request_status: str = Query(...),
     # authorization: str = Header(...),
     db: AsyncSession = Depends(get_db),
 ):
     driver_instance = DriverController(db)
     try:
         driver_profile = await driver_instance.get_driver_bookings(
-            driver_id, driver_id, booking_status
+            driver_id, request_status
         )
         return JSONResponse(content=driver_profile, status_code=200)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(e)},
+        )
+
+
+@driver_route.put("/booking")
+async def update_booking_status(
+    driver_id: str = Query(...),
+    booking_id: str = Query(...),
+    status_type: str = Query(...),
+    update_to: str = Query(...),
+    # authorization: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+):
+    driver_instance = DriverController(db)
+    try:
+        response = await driver_instance.update_booking_status(
+            driver_id, booking_id, status_type, update_to
+        )
+        return JSONResponse(content=response, status_code=200)
     except HTTPException as e:
         raise e
     except Exception as e:

@@ -72,30 +72,32 @@ class BookingRequest(Base):
     __tablename__ = "booking_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(String)
+    booking_id = Column(String, index=True, unique=True)
     user_id = Column(String, ForeignKey("users.userid"), index=True)
     vehicle_id = Column(String, ForeignKey("vehicles.vehicleid"), index=True)
     driver_id = Column(String, ForeignKey("drivers.driverid"), index=True)
-    user_name = Column(String)
-    user_email = Column(String)
-    user_mobile = Column(String)
-    driver_name = Column(String)
-    driver_email = Column(String)
-    driver_mobile = Column(String)
-    distance_from_vehicle = Column(Float)
-    distance_from_pickup_location = Column(Float)
+    pickup_location = Column(String)
     pickup_latitude = Column(Float)
     pickup_longitude = Column(Float)
-    pickup_location = Column(String)
+    drop_location = Column(String)
     drop_latitude = Column(Float)
     drop_longitude = Column(Float)
-    drop_location = Column(String)
+    distance_to_cover = Column(Float)
+    estimated_delivery_time = Column(Float)
     base_price = Column(Float)
     gst = Column(Float)
     platform_fee = Column(Float)
     total_price = Column(Float)
-    request_status = Column(String, default="pending")
-    booking_status = Column(String, default="pending")
-    order_completed = Column(Boolean, default=False)
+    request_status = Column(
+        String, default="Pending"
+    )  # ("Pending", "Accepted", "Rejected", "Completed")
+    delivery_status = Column(
+        String,
+        default="Pending Pickup",
+    )  # ( "Pending Pickup", "In Transit", "Out for Delivery", "Delivered", "Canceled")
+    order_status = Column(String, default="Pending")  # ("Pending", "Received")
+    payment_status = Column(
+        String, default="Completed"
+    )  # ("Pending", "Completed", "Failed", "Refunded")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

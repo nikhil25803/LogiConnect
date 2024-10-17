@@ -122,24 +122,34 @@ class BookingsController:
                 detail=f"Error creating booking: {str(e)}",
             )
 
-    async def get_booking_by_userid(self, user_id: str):
-        query = select(
-            BookingRequest.distance_from_vehicle,
-            BookingRequest.distance_from_pickup_location,
-            BookingRequest.pickup_location,
-            BookingRequest.drop_location,
-            BookingRequest.driver_name,
-            BookingRequest.driver_email,
-            BookingRequest.driver_mobile,
-            BookingRequest.base_price,
-            BookingRequest.gst,
-            BookingRequest.platform_fee,
-            BookingRequest.total_price,
-            BookingRequest.request_status,
-            BookingRequest.booking_status,
-        ).filter(BookingRequest.user_id == user_id)
+    async def get_user_bookings(self, user_id: str):
+        user_query = select(Users).filter(Users.userid == user_id)
+        result = await self.db.execute(user_query)
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
 
-        result = await self.db.execute(query)
+        booking_query = (
+            select(
+                BookingRequest.pickup_location,
+                BookingRequest.drop_location,
+                BookingRequest.distance_to_cover,
+                BookingRequest.estimated_delivery_time,
+                BookingRequest.total_price,
+                BookingRequest.request_status,
+                BookingRequest.delivery_status,
+                Driver.name.label("driver_name"),
+                Driver.email.label("driver_email"),
+                Driver.mobile.label("driver_mobile"),
+            )
+            .join(Driver, BookingRequest.driver_id == Driver.driverid)
+            .filter(BookingRequest.user_id == user_id)
+        )
+
+        result = await self.db.execute(booking_query)
         bookings = result.fetchall()
 
         if not bookings:
@@ -147,43 +157,53 @@ class BookingsController:
 
         formatted_bookings = []
         for booking in bookings:
-            formatted_bookings.append(
-                {
-                    "distance_from_vehicle": booking.distance_from_vehicle,
-                    "distance_from_pickup_location": booking.distance_from_pickup_location,
-                    "pickup_location": booking.pickup_location,
-                    "drop_location": booking.drop_location,
-                    "driver_name": booking.driver_name,
-                    "driver_email": booking.driver_email,
-                    "driver_mobile": booking.driver_mobile,
-                    "base_price": booking.base_price,
-                    "gst": booking.gst,
-                    "platform_fee": booking.platform_fee,
-                    "total_price": booking.total_price,
-                    "request_status": booking.request_status,
-                    "booking_status": booking.booking_status,
-                }
-            )
+            formatted_booking = {
+                "pickup_location": booking.pickup_location,
+                "drop_location": booking.drop_location,
+                "distance_to_cover": booking.distance_to_cover,
+                "estimated_delivery_time": booking.estimated_delivery_time,
+                "total_price": booking.total_price,
+                "request_status": booking.request_status,
+                "delivery_status": booking.delivery_status,
+                "driver_details": {
+                    "name": booking.driver_name,
+                    "email": booking.driver_email,
+                    "mobile": booking.driver_mobile,
+                },
+            }
+            formatted_bookings.append(formatted_booking)
 
         return formatted_bookings
 
-    # async def update_booking(self, booking_id: int, booking_data: BookingRequestUpdate):
-    #     booking = await self.get_booking_by_id(booking_id)
-    #     if not booking:
-    #         raise HTTPException(status_code=404, detail="Booking not found")
+    async def update_order_status(self, booking_id: str, new_status: str):
+        try:
+            booking_query = select(BookingRequest).filter(
+                BookingRequest.booking_id == booking_id
+            )
+            result = await self.db.execute(booking_query)
+            booking = result.scalar_one_or_none()
 
-    #     for key, value in booking_data.dict(exclude_unset=True).items():
-    #         setattr(booking, key, value)
+            if not booking:
+                raise HTTPException(status_code=404, detail="Booking not found")
 
-    #     await self.db.commit()
-    #     await self.db.refresh(booking)
-    #     return booking
+            if (
+                booking.request_status != "Accepted"
+                or booking.delivery_status != "Delivered"
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Order status can only be updated to 'Received' when request is accepted and delivery is completed",
+                )
 
-    # async def delete_booking(self, booking_id: int):
-    #     booking = await self.get_booking_by_id(booking_id)
-    #     if not booking:
-    #         raise HTTPException(status_code=404, detail="Booking not found")
+            booking.order_status = new_status
+            await self.db.commit()
+            await self.db.refresh(booking)
 
-    #     booking.is_active = False
-    #     await self.db.commit()
-    #     return {"detail": "Booking cancelled successfully"}
+            return {"message": f"Order status successfully updated to {new_status}"}
+
+        except Exception as e:
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error updating order status: {str(e)}",
+            )

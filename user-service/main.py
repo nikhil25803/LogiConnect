@@ -6,13 +6,15 @@ from routes.vehicle_route import vehicle_router
 from routes.booking_route import booking_router
 from datetime import datetime, timezone
 from config.cache import RedisCache
+from config.celery import background_task
+from celery import Celery, signature, shared_task
 
-
-# Initialise app
-cache = RedisCache()
 
 app = FastAPI()
 
+
+# Initialise cache and backgroundtask
+cache = RedisCache()
 
 # # Add event-handler
 # app.add_event_handler("startup", init_cache)
@@ -42,6 +44,8 @@ async def head(db: AsyncSession = Depends(get_db)):
 
         response = {"timestamp": current_timestamp, "headers": headers}
         print("Adding to cache")
+
+        background_task()
 
         await cache.set_cache(key="redis", value=response)
 

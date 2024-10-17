@@ -6,7 +6,7 @@ from controllers.vehicle_controller import VehicleController
 from models.schema import VehicleSearch
 
 
-vehicle_router = APIRouter(prefix="/vehicle", tags=["booking"])
+vehicle_router = APIRouter(prefix="/vehicle", tags=["vehicles"])
 
 
 @vehicle_router.post("/search")

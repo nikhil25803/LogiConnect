@@ -1,4 +1,4 @@
-.PHONY: run-postgres run-redis-ui clean run-redis
+.PHONY: run-postgres clean run-redis
 
 # PostgreSQL configuration
 PG_USER := logiconnect
@@ -33,16 +33,16 @@ run-postgres:
 # 	docker run --name my-redis -d -p $(REDIS_PORT):6379 redis:latest
 
 # Run RedisInsight UI
-run-redis-ui:
-	docker run --name redisinsight -d \
-		-p $(REDIS_INSIGHT_PORT):8001 \
-		--link my-redis:redis \
-		redis/redisinsight
+# run-redis-ui:
+# 	docker run --name redisinsight -d \
+# 		-p $(REDIS_INSIGHT_PORT):8001 \
+# 		--link my-redis:redis \
+# 		redis/redisinsight
 
 # Run all services
-run-all: run-postgres run-redis run-redis-ui
+run-all: run-postgres run-redis
 
 # Clean up
 clean:
-	docker stop my-postgres my-redis redisinsight || true
-	docker rm my-postgres my-redis redisinsight || true
+	docker stop my-postgres redis-stack  || true
+	docker rm my-postgres redis-stack  || true

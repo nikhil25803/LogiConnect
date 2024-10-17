@@ -10,6 +10,7 @@ class RedisCache:
         self.host = "localhost"
         self.port = 6379
         self.cache = Redis(host=self.host, port=self.port, decode_responses=True)
+        self.expiry = 60 * 10
 
     async def set_cache(self, key, value):
         try:
@@ -22,10 +23,10 @@ class RedisCache:
 
     async def get_cache(self, key):
         try:
-            # Use async method for getting cache
+
             value = await self.cache.get(key)
             if value:
-                # Redis `decode_responses=True` handles decoding
+
                 return eval(value)
             return None
         except Exception as e:

@@ -61,7 +61,7 @@ async def get_user_bookings(
 ):
     controller = BookingsController(db)
     try:
-        user_bookings = await controller.get_booking_by_userid(user_id)
+        user_bookings = await controller.get_user_bookings(user_id)
         return JSONResponse(content=user_bookings, status_code=200)
 
     except HTTPException as e:
@@ -74,4 +74,21 @@ async def get_user_bookings(
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": str(e)},
+        )
+
+
+@booking_router.put("/update-order-status")
+async def update_order_status(
+    booking_id: str = Query(...),
+    new_status: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        controller = BookingsController(db)
+        result = await controller.update_order_status(booking_id, new_status)
+        return result
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": e.detail},
         )
