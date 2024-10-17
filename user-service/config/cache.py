@@ -16,7 +16,6 @@ class RedisCache:
         try:
             if isinstance(value, dict):
                 value = str(value)
-            # Use async method for setting cache
             await self.cache.set(key, value)
         except Exception as e:
             print(f"Error setting cache: {e}")

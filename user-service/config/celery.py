@@ -1,11 +1,19 @@
 from celery import Celery
 import asyncio
+import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+CELERY_BROKER = os.getenv("CELERY_BROKER")
+CELERY_BACKEND = os.getenv("CELERY_BACKEND")
 
 
 celery_app = Celery(
     "tasks",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0",
+    broker=CELERY_BROKER,
+    backend=CELERY_BACKEND,
 )
 
 

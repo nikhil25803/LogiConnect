@@ -15,35 +15,41 @@ class UserController:
         self.db = db
 
     async def create_user(self, data: dict):
-        existing_user = await self.db.execute(
-            select(Users).filter(Users.email == data["email"])
-        )
-        if existing_user.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already registered",
+        try:
+            existing_user = await self.db.execute(
+                select(Users).filter(Users.email == data["email"])
+            )
+            if existing_user.scalars().first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User already registered",
+                )
+
+            entity_id = str(uuid4())
+            hashed_password = get_password_hash(data["password"])
+
+            new_user = Users(
+                userid=entity_id,
+                name=data.get("name"),
+                email=data.get("email"),
+                password=hashed_password,
+                country=data.get("country"),
+                country_code=data.get("country_code"),
+                role="User",
+                state=data.get("state"),
+                phone_number=data.get("phone_number"),
             )
 
-        entity_id = str(uuid4())
-        hashed_password = get_password_hash(data["password"])
+            self.db.add(new_user)
+            await self.db.commit()
+            await self.db.refresh(new_user)
 
-        new_user = Users(
-            userid=entity_id,
-            name=data.get("name"),
-            email=data.get("email"),
-            password=hashed_password,
-            country=data.get("country"),
-            country_code=data.get("country_code"),
-            role="User",
-            state=data.get("state"),
-            phone_number=data.get("phone_number"),
-        )
-
-        self.db.add(new_user)
-        await self.db.commit()
-        await self.db.refresh(new_user)
-
-        return {"message": "User onboarded successfully"}
+            return {"message": "User onboarded successfully"}
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error onboarding user",
+            )
 
     async def login_user(self, email: EmailStr, password: str):
         result = await self.db.execute(select(Users).filter(Users.email == email))
@@ -76,7 +82,7 @@ class UserController:
             "userid": user.userid,
         }
 
-    async def get_user_profile(self, user_id: str, authorization: str):
+    async def get_user_profile(self, user_id: str):
         query = select(Users).filter(Users.userid == user_id)
         result = await self.db.execute(query)
         user = result.scalars().first()
@@ -86,8 +92,6 @@ class UserController:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
-
-        verification(token=authorization.split(" ")[1], role="user", entity_id=user_id)
 
         return {
             "name": user.name,

@@ -123,57 +123,63 @@ class BookingsController:
             )
 
     async def get_user_bookings(self, user_id: str):
-        user_query = select(Users).filter(Users.userid == user_id)
-        result = await self.db.execute(user_query)
-        user = result.scalars().first()
-        if not user:
+        try:
+            user_query = select(Users).filter(Users.userid == user_id)
+            result = await self.db.execute(user_query)
+            user = result.scalars().first()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found",
+                )
+
+            booking_query = (
+                select(
+                    BookingRequest.pickup_location,
+                    BookingRequest.drop_location,
+                    BookingRequest.distance_to_cover,
+                    BookingRequest.estimated_delivery_time,
+                    BookingRequest.total_price,
+                    BookingRequest.request_status,
+                    BookingRequest.delivery_status,
+                    Driver.name.label("driver_name"),
+                    Driver.email.label("driver_email"),
+                    Driver.mobile.label("driver_mobile"),
+                )
+                .join(Driver, BookingRequest.driver_id == Driver.driverid)
+                .filter(BookingRequest.user_id == user_id)
+            )
+
+            result = await self.db.execute(booking_query)
+            bookings = result.fetchall()
+
+            if not bookings:
+                raise HTTPException(status_code=404, detail="No bookings found")
+
+            formatted_bookings = []
+            for booking in bookings:
+                formatted_booking = {
+                    "pickup_location": booking.pickup_location,
+                    "drop_location": booking.drop_location,
+                    "distance_to_cover": booking.distance_to_cover,
+                    "estimated_delivery_time": booking.estimated_delivery_time,
+                    "total_price": booking.total_price,
+                    "request_status": booking.request_status,
+                    "delivery_status": booking.delivery_status,
+                    "driver_details": {
+                        "name": booking.driver_name,
+                        "email": booking.driver_email,
+                        "mobile": booking.driver_mobile,
+                    },
+                }
+                formatted_bookings.append(formatted_booking)
+
+            return formatted_bookings
+        except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error fetching user bookings: {str(e)}",
             )
-
-        booking_query = (
-            select(
-                BookingRequest.pickup_location,
-                BookingRequest.drop_location,
-                BookingRequest.distance_to_cover,
-                BookingRequest.estimated_delivery_time,
-                BookingRequest.total_price,
-                BookingRequest.request_status,
-                BookingRequest.delivery_status,
-                Driver.name.label("driver_name"),
-                Driver.email.label("driver_email"),
-                Driver.mobile.label("driver_mobile"),
-            )
-            .join(Driver, BookingRequest.driver_id == Driver.driverid)
-            .filter(BookingRequest.user_id == user_id)
-        )
-
-        result = await self.db.execute(booking_query)
-        bookings = result.fetchall()
-
-        if not bookings:
-            raise HTTPException(status_code=404, detail="No bookings found")
-
-        formatted_bookings = []
-        for booking in bookings:
-            formatted_booking = {
-                "pickup_location": booking.pickup_location,
-                "drop_location": booking.drop_location,
-                "distance_to_cover": booking.distance_to_cover,
-                "estimated_delivery_time": booking.estimated_delivery_time,
-                "total_price": booking.total_price,
-                "request_status": booking.request_status,
-                "delivery_status": booking.delivery_status,
-                "driver_details": {
-                    "name": booking.driver_name,
-                    "email": booking.driver_email,
-                    "mobile": booking.driver_mobile,
-                },
-            }
-            formatted_bookings.append(formatted_booking)
-
-        return formatted_bookings
 
     async def update_order_status(self, booking_id: str, new_status: str):
         try:

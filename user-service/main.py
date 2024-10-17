@@ -13,12 +13,7 @@ from celery import Celery, signature, shared_task
 app = FastAPI()
 
 
-# Initialise cache and backgroundtask
 cache = RedisCache()
-
-# # Add event-handler
-# app.add_event_handler("startup", init_cache)
-# app.add_event_handler("shutdown", clear_cache)
 
 
 # Include Routers
@@ -29,7 +24,9 @@ app.include_router(booking_router)
 
 @app.get("/head")
 async def head(db: AsyncSession = Depends(get_db)):
-
+    """
+    To check DB, Cache and Background Task
+    """
     cached_result = await cache.get_cache("redis")
     if cached_result:
         print("From Cache")
