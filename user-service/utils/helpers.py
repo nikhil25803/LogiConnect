@@ -67,7 +67,7 @@ class LogisticsCalculations:
             pickup_lat, pickup_lon, drop_lat, drop_lon
         )
 
-        total_distance = (distance_vehicle_to_pickup + distance_pickup_to_drop) / 100
+        total_distance = distance_vehicle_to_pickup + distance_pickup_to_drop
 
         fuel_rate = self.FUEL_RATES.get(fuel_type, 10)
         base_price = total_distance * fuel_rate

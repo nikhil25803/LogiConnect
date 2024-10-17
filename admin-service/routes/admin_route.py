@@ -21,7 +21,8 @@ async def login_admin(admin_data: AdminLogin, db: AsyncSession = Depends(get_db)
             media_type="application/json",
             status_code=status.HTTP_200_OK,
         )
-    except HTTPException as e:
-        raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server Error: Unable to admin login.",
+        )

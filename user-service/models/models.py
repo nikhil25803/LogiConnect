@@ -10,6 +10,7 @@ from sqlalchemy import (
     ARRAY,
     ForeignKey,
 )
+from sqlalchemy.orm import relationship
 
 
 class Users(Base):
@@ -89,7 +90,7 @@ class BookingRequest(Base):
     total_price = Column(Float)
     request_status = Column(
         String, default="Pending"
-    )  # ("Pending", "Accepted", "Rejected")
+    )  # ("Pending", "Accepted", "Rejected", "Completed")
     delivery_status = Column(
         String,
         default="Pending Pickup",
