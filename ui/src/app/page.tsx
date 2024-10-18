@@ -1,8 +1,10 @@
 "use client";
 import Lottie from "lottie-react";
 import LogisticAnimation from "../../public/asset/LogisticAnimation.json";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter()
   return (
     <main className="bg-backgroundPrimary w-full font-montserrat h-screen">
       <div className="max-w-[1280px] mx-auto p-5 flex items-center justify-center h-screen lg:grid lg:grid-cols-2 lg:items-center lg:h-fit">
@@ -17,7 +19,9 @@ export default function Home() {
             customer teams, engaged people working in an agile culture, and a
             global footprint.
           </p>
-          <button className="px-5 py-3 bg-textSecondary hover:bg-backgroundPrimary hover:text-textSecondary transition duration-500 rounded-xl text-white">
+          <button className="px-5 py-3 bg-textSecondary hover:bg-backgroundPrimary hover:text-textSecondary transition duration-500 rounded-xl text-white" onClick={() => {
+            router.push("user/booking")
+          }}>
             Get Started
           </button>
         </div>

@@ -12,7 +12,7 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
     if (!name || !email || !state || !phoneNumber || !password) {
@@ -30,18 +30,36 @@ export default function SignUp() {
       password,
     };
 
-    console.log("Signup payload:", payload);
-    toast.success(
-      "Signup successful! Please check your email for verification."
-    );
+    try {
+      const response = await fetch("http://localhost:3001/user/onboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    setName("");
-    setEmail("");
-    setState("");
-    setPhoneNumber("");
-    setPassword("");
+      if (response.status === 201) {
+        toast.success(
+          "Signup successful! Please check your email for verification."
+        );
 
-    router.push("/login");
+        setName("");
+        setEmail("");
+        setState("");
+        setPhoneNumber("");
+        setPassword("");
+
+        router.push("/login");
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Signup failed! Please try again.");
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again later.");
+      console.error("Signup error:", error);
+    }
   };
 
   return (

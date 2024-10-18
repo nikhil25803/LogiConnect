@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -9,62 +10,74 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const requiredCredentials = {
-    user: {
-      email: "roshaen019@gmail.com",
-      password: "Roshan@12345",
-    },
-    driver: {
-      email: "driver@example.com",
-      password: "Driver@12345",
-    },
-  };
-
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
-    const credentials = isDriver
-      ? requiredCredentials.driver
-      : requiredCredentials.user;
+    try {
+      const response = await fetch("http://localhost:3001/user/login", {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (email === credentials.email && password === credentials.password) {
-      toast.success("Login successful!");
-      //   router.push(isDriver ? "/driver-dashboard" : "/user-dashboard");
-    } else {
-      toast.error("Invalid email or password. Please try again.");
+      if (response.ok) {
+        const data = await response.json();
+        const { access_token, userid, driverid } = data;
+
+        const role = userid ? "user" : driverid ? "driver" : null;
+
+        if (role) {
+          localStorage.setItem("access_token", access_token);
+          localStorage.setItem("userid", userid || driverid);
+          localStorage.setItem("role", role);
+
+          toast.success("Login successful!");
+          router.push(
+            role === "driver" ? "/driver/profile" : "/user/profile"
+          );
+        } else {
+          toast.error("User ID or Driver ID not found in the response.");
+        }
+      } else {
+        toast.error("Invalid email or password.");
+      }
+    } catch (error) {
+      toast.error("An error occurred while logging in. Please try again.");
     }
   };
 
   return (
     <section className="bg-backgroundPrimary w-full h-screen flex items-center justify-center font-montserrat">
-      <div className="max-w-[500px] w-full mx-auto p-8 bg-white rounded shadow">
-        <h2 className="text-3xl font-bold text-center mb-4">Login Page</h2>
+      <div className="max-w-[500px] w-full mx-auto p-8 bg-white rounded shadow-lg">
+        <h2 className="text-3xl font-bold text-center mb-6">Login Page</h2>
 
-        <div className="flex justify-center gap-5 mb-4">
+        <div className="flex justify-center gap-4 mb-6">
           <button
-            className={`px-5 py-3 rounded-l rounded-lg ${
+            className={`px-5 py-3 rounded-l-lg ${
               !isDriver
                 ? "bg-textSecondary text-white"
                 : "bg-backgroundPrimary text-textSecondary"
-            } trasition duration-500`}
+            } transition-all duration-300 ease-in-out`}
             onClick={() => setIsDriver(false)}
           >
             User Login
           </button>
           <button
-            className={`px-5 py-3  rounded-r rounded-lg ${
+            className={`px-5 py-3 rounded-r-lg ${
               isDriver
                 ? "bg-textSecondary text-white"
                 : "bg-backgroundPrimary text-textSecondary"
-            } trasition duration-500"
-            }`}
+            } transition-all duration-300 ease-in-out`}
             onClick={() => setIsDriver(true)}
           >
             Driver Login
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-lg">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="email" className="block text-textSecondary">
               Email
@@ -75,7 +88,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full p-2 border border-1 rounded"
+              className="w-full p-3 border border-gray-300 rounded-lg"
             />
           </div>
 
@@ -89,13 +102,13 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-3 border border-gray-300 rounded-lg"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-backgroundSecondary hover:bg-textSecondary hover:text-textWhite transition duration-500 rounded-lg border-0"
+            className="w-full py-3 bg-backgroundSecondary text-white hover:bg-textSecondary transition-all duration-300 ease-in-out rounded-lg"
           >
             Login as {isDriver ? "Driver" : "User"}
           </button>
