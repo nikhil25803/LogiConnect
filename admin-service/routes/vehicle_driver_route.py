@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
 from models.schema import AddDriver, AddVehicle, VehiclesResponse, DriversResponse
 from controllers.vehicle_driver_controller import VehicleDriverController
-from utils.populate_data import add_vehicles_without_token
 
 vehicle_driver_route = APIRouter(prefix="/logistics", tags=["admin"])
 
@@ -125,7 +124,3 @@ async def get_all_drivers(
 #         )
 
 
-@vehicle_driver_route.post("/populate-vehicles")
-async def populate_vehicles(num_vehicles: int = 10000, db=Depends(get_db)):
-    await add_vehicles_without_token(db, num_vehicles)
-    return {"message": f"{num_vehicles} vehicles added successfully!"}

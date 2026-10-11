@@ -1,5 +1,5 @@
 # Start with a lighter image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Install dependencies for PostgreSQL
 RUN apt-get update && apt-get install -y \

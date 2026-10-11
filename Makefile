@@ -1,38 +1,22 @@
-.PHONY: run-postgres clean run-redis 
+.PHONY: setup start stop test docker-build config
 
-PG_USER := logiconnect
-PG_PASSWORD := logiconnect@12345
-PG_DB := logiconnectDB
+setup:
+	cp -n .env.example .env || true
 
+start:
+	docker compose up --build
 
-run-redis:
-	docker run -d \
-		--name redis-stack \
-		-p 6379:6379 \
-		-p 8001:8001 \
-		redis/redis-stack:latest
+stop:
+	docker compose down
 
-run-postgres:
-	docker run --name my-postgres -d \
-		-e POSTGRES_USER=$(PG_USER) \
-		-e POSTGRES_PASSWORD=$(PG_PASSWORD) \
-		-e POSTGRES_DB=$(PG_DB) \
-		-p 5432:5432 \
-		postgres:latest
+test:
+	python3 -m pytest user-service/tests
+	python3 -m pytest driver-service/tests
+	python3 -m pytest admin-service/tests
+	python3 -m pytest api-gateway/tests
 
-# Run all services
-run-all: run-postgres run-redis
+docker-build:
+	docker compose build
 
-# Clean up
-clean:
-	docker stop my-postgres redis-stack run-services  || true
-	docker rm my-postgres redis-stack run-services  || true
-
-# DOcker compose run and clean services
-.PHONY: run-services
-run-services:
-	docker-compose up --build
-
-.PHONY: clean-services
-clean-services:
-	docker-compose down
+config:
+	docker compose config --quiet

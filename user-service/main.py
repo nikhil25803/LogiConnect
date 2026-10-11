@@ -10,7 +10,11 @@ from config.celery import background_task
 from celery import Celery, signature, shared_task
 
 
-app = FastAPI()
+app = FastAPI(
+    title="LogiConnect User Service",
+    description="User accounts, vehicle discovery, and booking APIs.",
+    version="1.0.0",
+)
 
 
 cache = RedisCache()

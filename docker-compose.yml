@@ -1,64 +1,81 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16-alpine
     environment:
-      POSTGRES_USER: logiconnect
-      POSTGRES_PASSWORD: logiconnect@12345
-      POSTGRES_DB: logiconnectDB
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
-  
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   redis:
-    image: redis/redis-stack:latest
+    image: redis:7-alpine
     ports:
-      - "6379:6379"
-      - "8001:8001"
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   user-service:
-    build:
-      context: ./user-service
+    build: ./user-service
     ports:
-      - "3001:3001"
-    env_file:
-      - ./user-service/.env.docker
+      - "${USER_SERVICE_HOST_PORT:-3001}:3001"
+    environment: &service-environment
+      DB_URL: ${DB_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      CELERY_BROKER: ${CELERY_BROKER}
+      CELERY_BACKEND: ${CELERY_BACKEND}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
-      - postgres
-      - redis
-  
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   driver-service:
-    build:
-      context: ./driver-service
+    build: ./driver-service
     ports:
-      - "3002:3002"
-    env_file:
-      - ./driver-service/.env.docker
+      - "${DRIVER_SERVICE_HOST_PORT:-3002}:3002"
+    environment: *service-environment
     depends_on:
-      - postgres
-      - redis
-  
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   admin-service:
-    build:
-      context: ./admin-service
+    build: ./admin-service
     ports:
-      - "3003:3003"
-    env_file:
-      - ./admin-service/.env.docker
+      - "${ADMIN_SERVICE_HOST_PORT:-3003}:3003"
+    environment: *service-environment
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   api-gateway:
-    build:
-      context: ./api-gateway  
+    build: ./api-gateway
     ports:
-      - "3000:3000"
+      - "${API_GATEWAY_HOST_PORT:-3000}:3000"
+    environment:
+      USER_SERVICE_URL: http://user-service:3001
+      DRIVER_SERVICE_URL: http://driver-service:3002
+      ADMIN_SERVICE_URL: http://admin-service:3003
     depends_on:
       - user-service
       - driver-service
       - admin-service
-
-networks:
-  default:
-    driver: bridge

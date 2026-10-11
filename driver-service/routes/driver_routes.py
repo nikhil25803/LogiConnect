@@ -6,7 +6,6 @@ from models.models import Driver
 from models.schema import DriverOnboard, DriverLogin
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
-from utils.populate_data import populate_driver_data
 from typing import Literal
 
 from utils.token import verification
@@ -144,10 +143,3 @@ async def update_booking_status(
         )
 
 
-@driver_route.post("/populate")
-async def populate_drivers(num_drivers: int = 1000, db: AsyncSession = Depends(get_db)):
-    try:
-        response = await populate_driver_data(db, num_drivers)
-        return JSONResponse(content=response, status_code=status.HTTP_201_CREATED)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

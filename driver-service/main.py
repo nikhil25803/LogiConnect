@@ -6,7 +6,11 @@ from config.cache import RedisCache
 from routes.driver_routes import driver_route
 from datetime import datetime, timezone
 
-app = FastAPI()
+app = FastAPI(
+    title="LogiConnect Driver Service",
+    description="Driver authentication, profiles, and booking workflow APIs.",
+    version="1.0.0",
+)
 
 app.include_router(driver_route)
 

@@ -8,7 +8,11 @@ from datetime import datetime, timezone
 from config.cache import RedisCache
 
 
-app = FastAPI()
+app = FastAPI(
+    title="LogiConnect Admin Service",
+    description="Administrative authentication and fleet management APIs.",
+    version="1.0.0",
+)
 
 app.include_router(admin_route)
 app.include_router(vehicle_driver_route)

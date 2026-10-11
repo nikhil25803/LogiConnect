@@ -1,55 +1,84 @@
-from fastapi import FastAPI, Request, HTTPException
-import httpx
+import os
 from contextlib import asynccontextmanager
 
-app = FastAPI()
+import httpx
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import Response
 
-# Create a reusable async client session for performance and connection pooling
-client = httpx.AsyncClient()
+
+SERVICE_URLS = {
+    "user": os.getenv("USER_SERVICE_URL", "http://user-service:3001"),
+    "driver": os.getenv("DRIVER_SERVICE_URL", "http://driver-service:3002"),
+    "admin": os.getenv("ADMIN_SERVICE_URL", "http://admin-service:3003"),
+}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Setup: Create client connection before handling requests
+    app.state.client = httpx.AsyncClient()
     yield
-    # Teardown: Close the client connection after handling requests
-    await client.aclose()
+    await app.state.client.aclose()
 
-app.lifespan = lifespan
 
-async def proxy(request: Request, service_url: str):
+app = FastAPI(
+    title="LogiConnect API Gateway",
+    description="Single entry point for the LogiConnect backend services.",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+
+def resolve_service(path: str) -> str:
+    prefix = path.split("/", 1)[0]
+    if prefix in {"user", "vehicle", "booking"}:
+        return SERVICE_URLS["user"]
+    if prefix == "driver":
+        return SERVICE_URLS["driver"]
+    if prefix in {"admin", "logistics"}:
+        return SERVICE_URLS["admin"]
+    raise HTTPException(status_code=404, detail="Service not found")
+
+
+async def proxy(request: Request, service_url: str) -> Response:
+    body = await request.body()
+    headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in {"host", "content-length"}
+    }
+
     try:
-        # Determine the HTTP method and make the appropriate request
-        if request.method == "GET":
-            response = await client.get(service_url, params=request.query_params)
-        elif request.method == "POST":
-            response = await client.post(service_url, json=await request.json())
-        elif request.method == "PUT":
-            response = await client.put(service_url, json=await request.json())
-        elif request.method == "DELETE":
-            response = await client.delete(service_url)
-        else:
-            raise HTTPException(status_code=405, detail="Method not allowed")
+        upstream = await request.app.state.client.request(
+            method=request.method,
+            url=service_url,
+            params=request.query_params,
+            content=body,
+            headers=headers,
+        )
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail=f"Upstream service unavailable: {exc}")
 
-        # Raise an error if the response was unsuccessful
-        response.raise_for_status()
+    response_headers = {}
+    if content_type := upstream.headers.get("content-type"):
+        response_headers["content-type"] = content_type
 
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return Response(
+        content=upstream.content,
+        status_code=upstream.status_code,
+        headers=response_headers,
+    )
 
 
-@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def gateway(request: Request, full_path: str):
-    # Determine the service URL based on the request path
-    if full_path.startswith("user/"):
-        service_url = f"http://user-service:8000/{full_path}"
-    elif full_path.startswith("driver/"):
-        service_url = f"http://driver-service:8000/{full_path}"
-    elif full_path.startswith("admin/"):
-        service_url = f"http://admin-service:8000/{full_path}"
-    else:
-        raise HTTPException(status_code=404, detail="Service not found")
+    base_url = resolve_service(full_path)
+    return await proxy(request, f"{base_url}/{full_path}")
 
-    return await proxy(request, service_url)
+
+for method in ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]:
+    app.add_api_route(
+        "/{full_path:path}",
+        gateway,
+        methods=[method],
+        name=f"gateway_{method.lower()}",
+        operation_id=f"gateway_{method.lower()}",
+    )
