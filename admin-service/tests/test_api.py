@@ -72,3 +72,29 @@ def test_admin_controller_failure_is_preserved(client, monkeypatch):
     monkeypatch.setattr(AdminController, "login_admin", AsyncMock(side_effect=RuntimeError("failed")))
     response = client.post("/admin/login", json={"email": "admin@example.com", "password": "secret"})
     assert response.status_code == 500
+
+
+def test_internal_routes_are_protected_and_hidden(client):
+    assert client.get("/internal/vehicles").status_code == 401
+    assert client.get("/internal/vehicles", headers={"X-Internal-API-Key": "wrong"}).status_code == 401
+    assert not any(path.startswith("/internal") for path in client.get("/openapi.json").json()["paths"])
+
+
+def test_driver_provisioning_maps_to_driver_service(monkeypatch):
+    from controllers.vehicle_driver_controller import VehicleDriverController
+    import controllers.vehicle_driver_controller as controller_module
+    from models.schema import AddDriver
+
+    monkeypatch.setattr(controller_module, "verification", lambda **_: None)
+    request = AsyncMock(return_value={"driverid": "d1", "email": "driver@example.com"})
+    monkeypatch.setattr(controller_module, "internal_request", request)
+    driver = AddDriver(
+        driverid=None, name="Driver", email="driver@example.com", mobile="999", country="IN", state="KA",
+        current_latitude=1, current_longitude=2, regions_available=["KA"], availability=True,
+        password="secret", country_code="+91",
+    )
+    response = asyncio.run(VehicleDriverController(AsyncMock()).add_driver(driver, "token"))
+    assert response["driverid"] == "d1"
+    sent = request.await_args.kwargs["json"]
+    assert sent["password"] == "secret"
+    assert "role" not in sent

@@ -21,9 +21,5 @@ Base = declarative_base()
 
 
 async def get_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     async with SessionLocal() as session:
         yield session
-        await session.close()

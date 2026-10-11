@@ -35,7 +35,7 @@ class UserController:
                 password=hashed_password,
                 country=data.get("country"),
                 country_code=data.get("country_code"),
-                role="User",
+                role="user",
                 state=data.get("state"),
                 phone_number=data.get("phone_number"),
             )

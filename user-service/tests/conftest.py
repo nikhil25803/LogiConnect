@@ -17,6 +17,9 @@ os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 os.environ.setdefault("CELERY_BROKER", "memory://")
 os.environ.setdefault("CELERY_BACKEND", "cache+memory://")
 os.environ.setdefault("GOOGLE_MAPS_API_KEY", "test-key")
+os.environ.setdefault("INTERNAL_API_KEY", "test-internal-key")
+os.environ.setdefault("DRIVER_SERVICE_URL", "http://driver")
+os.environ.setdefault("ADMIN_SERVICE_URL", "http://admin")
 
 from config.database import get_db
 from main import app

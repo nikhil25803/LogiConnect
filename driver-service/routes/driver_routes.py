@@ -45,7 +45,9 @@ async def login_driver(driver_login: DriverLogin, db: AsyncSession = Depends(get
             media_type="application/json",
             status_code=status.HTTP_200_OK,
         )
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to login driver.",
@@ -74,7 +76,9 @@ async def get_driver_profile(
             driver_id, authorization
         )
         return JSONResponse(content=driver_profile, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to get driver profile.",
@@ -104,7 +108,9 @@ async def get_driver_bookings(
             driver_id, request_status
         )
         return JSONResponse(content=driver_profile, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to get driver bookings.",
@@ -136,7 +142,9 @@ async def update_booking_status(
             driver_id, booking_id, status_type, update_to
         )
         return JSONResponse(content=response, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to update booking status.",

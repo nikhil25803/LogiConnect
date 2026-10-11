@@ -18,6 +18,8 @@ async def add_vehicle(
     controller = VehicleDriverController(db)
     try:
         return await controller.add_vehicle(vehicle_data=vehicle_data, token=token)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -62,6 +64,8 @@ async def get_all_vehicles(
         return await vehicle_driver_controller.get_all_vehicles(
             token=token, limit=limit, offset=offset
         )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -79,6 +83,8 @@ async def add_driver(
     controller = VehicleDriverController(db)
     try:
         return await controller.add_driver(driver_data=driver_data, token=token)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -100,6 +106,8 @@ async def get_all_drivers(
         return await vehicle_driver_controller.get_all_drivers(
             token=token, limit=limit, offset=offset
         )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -8,7 +8,9 @@ The user service owns user accounts, vehicle and driver discovery, and user-side
 
 ## Configuration
 
-Required variables are `DB_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REDIS_HOST`, `REDIS_PORT`, `CELERY_BROKER`, and `CELERY_BACKEND`. `GOOGLE_MAPS_API_KEY` is required for geocoding and route calculations.
+This service exclusively owns the `users` and `booking_requests` tables. Required variables are `DB_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `INTERNAL_API_KEY`, `DRIVER_SERVICE_URL`, `ADMIN_SERVICE_URL`, `REDIS_HOST`, `REDIS_PORT`, `CELERY_BROKER`, and `CELERY_BACKEND`. `GOOGLE_MAPS_API_KEY` is required only for geocoding and booking route calculations; login, profile, and distance-based discovery work without it. Run `alembic upgrade head` from this directory, or `make migrate` from the repository root.
+
+Service-only endpoints `GET /internal/bookings` and `PATCH /internal/bookings/{id}/driver-status` require `X-Internal-API-Key`, are omitted from OpenAPI, and are used by the driver service. Driver display values are captured on each booking as snapshots.
 
 ## Endpoints
 

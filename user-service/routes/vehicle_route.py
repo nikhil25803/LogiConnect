@@ -34,6 +34,8 @@ async def search_vehicles(
     try:
         vehicle_search_result = await vehicle_instance.search_vehicle(search_params)
         return JSONResponse(content=vehicle_search_result, status_code=200)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -63,7 +65,9 @@ async def search_drivers(
     try:
         driver_profile = await vehicle_instance.suggest_nearest_driver(vehicle_id)
         return JSONResponse(content=driver_profile, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to search driver",

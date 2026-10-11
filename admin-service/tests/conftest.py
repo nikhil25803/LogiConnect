@@ -18,6 +18,8 @@ os.environ.setdefault("CELERY_BROKER", "memory://")
 os.environ.setdefault("CELERY_BACKEND", "cache+memory://")
 os.environ.setdefault("ADMIN_EMAIL", "admin@example.com")
 os.environ.setdefault("ADMIN_PASSWORD", "secret")
+os.environ.setdefault("INTERNAL_API_KEY", "test-internal-key")
+os.environ.setdefault("DRIVER_SERVICE_URL", "http://driver")
 
 from config.database import get_db
 from main import app

@@ -8,6 +8,10 @@ The driver service owns driver authentication, profiles, assigned bookings, and 
 
 ## Configuration
 
+This service exclusively owns the `drivers` table. Set `DB_URL`, `INTERNAL_API_KEY`, `USER_SERVICE_URL`, and `ADMIN_SERVICE_URL` in addition to the authentication and Redis variables. Run `alembic upgrade head` here, or `make migrate` at the repository root.
+
+Service-only `POST/GET/PATCH /internal/drivers...` routes require `X-Internal-API-Key`, are omitted from OpenAPI, and never return password hashes. Admin provisioning uses these routes and passwords are hashed before storage.
+
 Required variables are `DB_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REDIS_HOST`, `REDIS_PORT`, `CELERY_BROKER`, and `CELERY_BACKEND`.
 
 ## Endpoints

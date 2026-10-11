@@ -8,6 +8,10 @@ The admin service owns administrative authentication and vehicle/driver fleet ma
 
 ## Configuration
 
+This service exclusively owns the `vehicles` table. Set `DB_URL`, `INTERNAL_API_KEY`, and `DRIVER_SERVICE_URL` in addition to the admin authentication and Redis variables. Run `alembic upgrade head` here, or `make migrate` at the repository root.
+
+Service-only `GET/PATCH /internal/vehicles...` routes require `X-Internal-API-Key` and are omitted from OpenAPI. Driver provisioning and listing are delegated to the driver service.
+
 Required variables are `DB_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `CELERY_BROKER`, and `CELERY_BACKEND`.
 
 ## Endpoints

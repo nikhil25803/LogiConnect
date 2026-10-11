@@ -16,9 +16,14 @@ flowchart LR
     Gateway --> User[User Service :3001]
     Gateway --> Driver[Driver Service :3002]
     Gateway --> Admin[Admin Service :3003]
-    User --> Postgres[(PostgreSQL)]
-    Driver --> Postgres
-    Admin --> Postgres
+    User --> UserDB[(User PostgreSQL)]
+    Driver --> DriverDB[(Driver PostgreSQL)]
+    Admin --> AdminDB[(Admin PostgreSQL)]
+    User -. internal HTTP .-> Driver
+    User -. internal HTTP .-> Admin
+    Admin -. internal HTTP .-> Driver
+    Driver -. internal HTTP .-> User
+    Driver -. internal HTTP .-> Admin
     User --> Redis[(Redis)]
     Driver --> Redis
     Admin --> Redis
@@ -46,6 +51,8 @@ The gateway is available at `http://localhost:3000`. Individual services remain 
 If a default host port is already occupied, change the corresponding `*_HOST_PORT` value in `.env`; container-to-container ports do not change.
 
 The generated `.env` is development-only and is ignored by Git. Change its sample credentials before using the project outside a local machine.
+
+Each backend owns a separate PostgreSQL database and named volume. Alembic migration jobs run before the APIs start. `make stop` preserves data, `make migrate` upgrades all databases, and `make fresh-start` deliberately deletes only this Compose project's three database volumes before rebuilding and starting an empty system. Redis has no volume and is always ephemeral.
 
 ## Run a service natively
 
@@ -86,6 +93,6 @@ GitHub Actions exposes separate checks for every service under `Test / <service>
 
 - Establish reproducible load-test scenarios and publish measured throughput and latency.
 - Add Kubernetes manifests and production-focused observability.
-- Add database-backed integration tests and migration management.
+- Expand database-backed integration and migration compatibility tests.
 
 Scalability figures are intentionally not claimed until repeatable benchmark results are available.
