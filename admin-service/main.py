@@ -1,17 +1,33 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
+from config.internal import close_internal_client, start_internal_client
 from config.celery import background_task
 from config.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from routes.admin_route import admin_route
 from routes.vehicle_driver_route import vehicle_driver_route
+from routes.internal_routes import internal_router
 from datetime import datetime, timezone
 from config.cache import RedisCache
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await start_internal_client()
+    yield
+    await close_internal_client()
+
+
+app = FastAPI(
+    title="LogiConnect Admin Service",
+    description="Administrative authentication and fleet management APIs.",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 app.include_router(admin_route)
 app.include_router(vehicle_driver_route)
+app.include_router(internal_router)
 
 cache = RedisCache()
 

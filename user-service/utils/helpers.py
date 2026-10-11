@@ -14,7 +14,14 @@ class LogisticsCalculations:
     def __init__(self):
         self.FUEL_RATES = {"Petrol": 100, "Diesel": 90, "Electric": 60}
         self.API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-        self.gmaps = googlemaps.Client(key=self.API_KEY)
+        self.gmaps = None
+
+    def _maps_client(self):
+        if self.gmaps is None:
+            if not self.API_KEY:
+                raise RuntimeError("GOOGLE_MAPS_API_KEY is required for geocoding")
+            self.gmaps = googlemaps.Client(key=self.API_KEY)
+        return self.gmaps
 
     def calculate_estimated_distance(
         self, from_latitude, from_longitude, to_latitude, to_longitude
@@ -87,7 +94,7 @@ class LogisticsCalculations:
 
     def geocode_address(self, address: str):
         try:
-            geocode_result = self.gmaps.geocode(address)
+            geocode_result = self._maps_client().geocode(address)
             coordinates = geocode_result[0]["geometry"]["location"]
             return [coordinates["lat"], coordinates["lng"]]
         except Exception:
@@ -100,7 +107,8 @@ class LogisticsCalculations:
             origin_coordinates = self.geocode_address(origin_address)
             destination_coordinates = self.geocode_address(destination_address)
 
-            origin_vehicle_distance_matrix = self.gmaps.distance_matrix(
+            maps_client = self._maps_client()
+            origin_vehicle_distance_matrix = maps_client.distance_matrix(
                 (vehicle_lat, vehicle_lng), tuple(origin_coordinates), mode="driving"
             )
 
@@ -118,7 +126,7 @@ class LogisticsCalculations:
                 int(origin_to_vehicle_duration["value"]) // 60
             ) // 60
 
-            origin_destination_distance_matrix = self.gmaps.distance_matrix(
+            origin_destination_distance_matrix = maps_client.distance_matrix(
                 tuple(origin_coordinates),
                 tuple(destination_coordinates),
                 mode="driving",

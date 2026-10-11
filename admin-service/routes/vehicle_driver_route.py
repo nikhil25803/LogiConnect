@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
 from models.schema import AddDriver, AddVehicle, VehiclesResponse, DriversResponse
 from controllers.vehicle_driver_controller import VehicleDriverController
-from utils.populate_data import add_vehicles_without_token
 
 vehicle_driver_route = APIRouter(prefix="/logistics", tags=["admin"])
 
@@ -19,6 +18,8 @@ async def add_vehicle(
     controller = VehicleDriverController(db)
     try:
         return await controller.add_vehicle(vehicle_data=vehicle_data, token=token)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -63,6 +64,8 @@ async def get_all_vehicles(
         return await vehicle_driver_controller.get_all_vehicles(
             token=token, limit=limit, offset=offset
         )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -80,6 +83,8 @@ async def add_driver(
     controller = VehicleDriverController(db)
     try:
         return await controller.add_driver(driver_data=driver_data, token=token)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -101,6 +106,8 @@ async def get_all_drivers(
         return await vehicle_driver_controller.get_all_drivers(
             token=token, limit=limit, offset=offset
         )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -125,7 +132,3 @@ async def get_all_drivers(
 #         )
 
 
-@vehicle_driver_route.post("/populate-vehicles")
-async def populate_vehicles(num_vehicles: int = 10000, db=Depends(get_db)):
-    await add_vehicles_without_token(db, num_vehicles)
-    return {"message": f"{num_vehicles} vehicles added successfully!"}

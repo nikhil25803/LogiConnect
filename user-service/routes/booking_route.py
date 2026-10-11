@@ -35,7 +35,9 @@ async def get_coordinates(
     try:
         coordinates = await controller.get_coordinates(pickup_address, drop_address)
         return JSONResponse(content=coordinates, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to get coordinates.",
@@ -68,7 +70,9 @@ async def create_booking(
             status_code=201,
         )
 
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to create booking.",
@@ -96,7 +100,9 @@ async def get_user_bookings(
     try:
         user_bookings = await controller.get_user_bookings(user_id)
         return JSONResponse(content=user_bookings, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to fetch user bookings.",
@@ -126,7 +132,9 @@ async def update_order_status(
         controller = BookingsController(db)
         result = await controller.update_order_status(booking_id, new_status)
         return result
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to update booking statuss",

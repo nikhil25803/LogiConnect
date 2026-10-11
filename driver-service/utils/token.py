@@ -37,23 +37,12 @@ def decode_access_token(token: str):
 def verification(token: str, role: str, entity_id: str):
     try:
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if role == "user" and role == decoded_data.get("role"):
-            user_id_from_token = decoded_data.get("userid")
-
-            if entity_id != user_id_from_token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Unauthorized access",
-                )
-
-        if role == "driver" and role == decoded_data.get("role"):
-            driver_id_from_token = decoded_data.get("driverid")
-
-            if entity_id != driver_id_from_token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Unauthorized access",
-                )
+        expected_role = role.lower()
+        if str(decoded_data.get("role", "")).lower() != expected_role:
+            raise HTTPException(status_code=401, detail="Unauthorized access")
+        claim = {"user": "userid", "driver": "driverid", "admin": "email"}.get(expected_role)
+        if not claim or decoded_data.get(claim) != entity_id:
+            raise HTTPException(status_code=401, detail="Unauthorized access")
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -67,7 +56,5 @@ def verification(token: str, role: str, entity_id: str):
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+    except HTTPException:
+        raise

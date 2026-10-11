@@ -6,7 +6,6 @@ from models.models import Driver
 from models.schema import DriverOnboard, DriverLogin
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
-from utils.populate_data import populate_driver_data
 from typing import Literal
 
 from utils.token import verification
@@ -46,7 +45,9 @@ async def login_driver(driver_login: DriverLogin, db: AsyncSession = Depends(get
             media_type="application/json",
             status_code=status.HTTP_200_OK,
         )
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to login driver.",
@@ -75,7 +76,9 @@ async def get_driver_profile(
             driver_id, authorization
         )
         return JSONResponse(content=driver_profile, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to get driver profile.",
@@ -105,7 +108,9 @@ async def get_driver_bookings(
             driver_id, request_status
         )
         return JSONResponse(content=driver_profile, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to get driver bookings.",
@@ -137,17 +142,12 @@ async def update_booking_status(
             driver_id, booking_id, status_type, update_to
         )
         return JSONResponse(content=response, status_code=200)
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server Error: Unable to update booking status.",
         )
 
 
-@driver_route.post("/populate")
-async def populate_drivers(num_drivers: int = 1000, db: AsyncSession = Depends(get_db)):
-    try:
-        response = await populate_driver_data(db, num_drivers)
-        return JSONResponse(content=response, status_code=status.HTTP_201_CREATED)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
